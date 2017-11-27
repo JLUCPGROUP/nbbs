@@ -51,6 +51,63 @@ bool SAC1::enforce() const {
 		}
 	} while (modified);
 
+	for (int i = 0; i < 20; i++) {
+		GModel *s = static_cast<GModel*>(model->clone());
+		rel(*s, s->vs[0] == 0);
+		rel(*s, s->vs[3] == 0);
+		rel(*s, s->vs[7] == i);
+		status = s->status();
+		printf("(%d,%d,%d,%d,%d,%d):", 0, 0, 3, 0, 7, i);
+
+		if (status == SS_BRANCH) {
+			printf(" sat!\n");
+		}
+		else if (status == SS_SOLVED) {
+			s->print();
+		}
+		else {
+			printf(" unsat!\n");
+		}
+	}
+	//for (int i = 0; i < model->vs.size(); ++i) {
+	//	const IntVar v0 = model->vs[i];
+	//	for (IntVarValues j(v0); j(); ++j) {
+
+	//		for (int k = 0; k < model->vs.size(); ++k) {
+	//			if (i != k) {
+	//				const IntVar v1 = model->vs[k];
+	//				for (IntVarValues l(v1); l(); ++l) {
+
+	//					GModel *s = static_cast<GModel*>(model->clone());
+	//					rel(*s, s->vs[i] == j.val());
+	//					rel(*s, s->vs[k] == l.val());
+	//					status = s->status();
+	//					printf("(%d,%d,%d,%d):", i, j.val(), k, l.val());
+
+	//					if (status == SS_BRANCH) {
+	//						printf(" sat!\n");
+	//					}
+	//					else if (status == SS_SOLVED) {
+	//						s->print();
+	//					}
+	//					else {
+	//						printf(" unsat!\n");
+	//					}
+
+	//					//for (size_t m = 0; m < s->vs.size(); m++) {
+	//					//	const IntVar v2 = s->vs[m];
+	//					//	for (IntVarValues n(v2); n(); ++n)
+	//					//		//bsd[i][j.val()][k][l.val()][m][n.val()] = 1;
+	//					//	/*	printf()*/
+	//					//}
+	//					delete s;
+	//				}
+	//			}
+
+	//		}
+	//	}
+	//}
+
 	return true;
 }
 //

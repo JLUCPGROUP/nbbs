@@ -170,6 +170,64 @@ protected:
 	GModel *gm_;
 };
 
+template<class T>
+class BitSetModel2Key {
+public:
+	BitSetModel2Key() {};
+	void initial(GModel* gm) {
+		mds = gm->mds;
+		vs_size = gm->vs.size();
+
+		bsd.resize(vs_size, vector<vector<T>>(mds, vector<T>(vs_size)));
+		bd.resize(vs_size, 0);
+		for (size_t i = 0; i < gm->vs.size(); i++) {
+			const IntVar v0 = gm->vs[i];
+			for (IntVarValues j(v0); j(); ++j) {
+				for (size_t k = 0; k < gm->vs.size(); k++) {
+					const IntVar v1 = gm->vs[i];
+					for (IntVarValues l(v1); l(); ++l) {
+						//bd[i] |= M1[j.val()];
+						bd[i][j.val()] = 1;
+						GModel *s = static_cast<GModel*>(gm->clone());
+						rel(*s, s->vs[i] == j.val());
+						rel(*s, s->vs[k] == l.val());
+						s->status();
+						for (size_t m = 0; m < s->vs.size(); m++) {
+							const IntVar v2 = s->vs[m];
+							for (IntVarValues n(v2); n(); ++n)
+								bsd[i][j.val()][k][l.val()][m][n.val()] = 1;
+						}
+						delete s;
+					}
+				}
+			}
+		}
+	}
+	virtual ~BitSetModel2Key() {};
+	vector<vector<vector<vector<vector<T>>>>> bsd;
+	vector<T> bd;
+	void Show() {
+		cout << "----------------------bitDom----------------------" << endl;
+		for (size_t i = 0; i < bd.size(); i++)
+			cout << "bd[" << i << "]: " << bd[i] << endl;
+
+		cout << "----------------------bitSubDom----------------------" << endl;
+		for (size_t i = 0; i < bsd.size(); i++) {
+			for (size_t j = 0; j < bsd[i].size(); j++) {
+				printf("[%2d][%2d]: ", i, j);
+				for (size_t k = 0; k < bsd[i][j].size(); k++) {
+					cout << bsd[i][j][k] << " ";
+				}
+				cout << endl;
+			}
+		}
+	}
+	int mds;
+	int vs_size;
+protected:
+	GModel *gm_;
+};
+
 class IntVal {
 public:
 	int v;
@@ -662,7 +720,8 @@ static ByteSize GetBitSetSize(const int mds) {
 template<class T>
 SearchStatistics binary_search(GModel *gm, Heuristic::Var varh, Heuristic::Val valh, const int64_t time_limit, const int64_t start_time = 0) {
 	CPUSolver<T> s(gm, start_time);
-	const SearchStatistics statistics = s.MAC(varh, valh, time_limit);
+	SearchStatistics statistics;
+	//const SearchStatistics statistics = s.MAC(varh, valh, time_limit);
 	//const SearchStatistics statistics = s.search(varh, valh, time_limit, Heuristic::DS_NB);
 	return statistics;
 }
